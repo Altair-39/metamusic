@@ -15,6 +15,15 @@ pub struct App {
     message: String,
 }
 
+#[derive(Clone)]
+pub struct TagInfo {
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub year: String,
+    pub track: String,
+}
+
 #[derive(PartialEq)]
 pub enum Mode {
     FileSelection,
@@ -178,5 +187,33 @@ impl App {
 
     pub fn pop_from_buffer(&mut self) {
         self.input_buffer.pop();
+    }
+
+    pub fn tags_for_file(&self, filename: &str) -> Option<TagInfo> {
+        match Tag::read_from_path(filename) {
+            Ok(tag) => Some(TagInfo {
+                title: tag
+                    .title()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Unknown".to_string()),
+                artist: tag
+                    .artist()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Unknown".to_string()),
+                album: tag
+                    .album()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Unknown".to_string()),
+                year: tag
+                    .date_recorded()
+                    .map(|y| y.to_string())
+                    .unwrap_or_else(|| "Unknown".to_string()),
+                track: tag
+                    .track()
+                    .map(|t| t.to_string())
+                    .unwrap_or_else(|| "Unknown".to_string()),
+            }),
+            Err(_) => None,
+        }
     }
 }
