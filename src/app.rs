@@ -1,7 +1,12 @@
 use crate::functions::*;
 
 use id3::{Tag, TagLike};
-use std::error::Error;
+use ratatui_image::{picker::Picker, protocol::StatefulProtocol};
+use std::{
+    collections::HashMap,
+    error::Error,
+    sync::{Arc, Mutex},
+};
 
 pub struct App {
     files: Vec<String>,
@@ -13,6 +18,8 @@ pub struct App {
     current_file: String,
     mode: Mode,
     message: String,
+    pub album_art_cache: HashMap<String, Arc<Mutex<StatefulProtocol>>>,
+    pub image_picker: Picker,
 }
 
 #[derive(Clone)]
@@ -34,6 +41,9 @@ pub enum Mode {
 impl App {
     pub fn new() -> Result<Self, Box<dyn Error>> {
         let files = get_mp3_files(".")?;
+        // Initialize the image picker
+        let image_picker = Picker::from_fontsize((10, 24));
+
         Ok(App {
             files: files.clone(),
             selected_file: 0,
@@ -50,9 +60,53 @@ impl App {
             current_file: files.first().cloned().unwrap_or_default(),
             mode: Mode::FileSelection,
             message: String::from("Select a file to edit"),
+            album_art_cache: HashMap::new(),
+            image_picker,
         })
     }
 
+    pub fn load_album_art(&mut self, filename: &str) -> Option<Arc<Mutex<StatefulProtocol>>> {
+        // Check cache first
+        if let Some(cached) = self.album_art_cache.get(filename) {
+            return Some(cached.clone());
+        }
+
+        // Extract album art from MP3 file
+        if let Some(art_data) = self.extract_album_art_bytes(filename) {
+            // Try to decode the image
+            if let Ok(dyn_img) = image::load_from_memory(&art_data) {
+                // Create protocol for rendering
+                let protocol = self.image_picker.new_resize_protocol(dyn_img);
+                let protocol_arc = Arc::new(Mutex::new(protocol));
+
+                self.album_art_cache
+                    .insert(filename.to_string(), protocol_arc.clone());
+                return Some(protocol_arc);
+            }
+        }
+
+        None
+    }
+
+    fn extract_album_art_bytes(&self, filename: &str) -> Option<Vec<u8>> {
+        match Tag::read_from_path(filename) {
+            Ok(tag) => {
+                if let Some(picture) = tag.pictures().next() {
+                    return Some(picture.data.clone());
+                }
+                None
+            }
+            Err(_) => None,
+        }
+    }
+    pub fn has_album_art(&self, filename: &str) -> bool {
+        self.album_art_cache.contains_key(filename) || {
+            match Tag::read_from_path(filename) {
+                Ok(tag) => tag.pictures().next().is_some(),
+                Err(_) => false,
+            }
+        }
+    }
     pub fn next_item(&mut self) {
         match self.mode {
             Mode::FileSelection => {
