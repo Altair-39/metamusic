@@ -49,7 +49,6 @@ fn run_app(
                         }
                     }
                     KeyCode::Esc => app.cancel_editing(),
-                    KeyCode::Char('b') => app.back_to_files(),
                     KeyCode::Char(c) => app.push_to_buffer(c),
                     KeyCode::Backspace => {
                         app.pop_from_buffer();
