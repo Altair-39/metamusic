@@ -259,7 +259,7 @@ fn create_tags_preview_widget(app: &App) -> Paragraph<'static> {
 }
 
 fn create_album_art_widget(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
-    let block = Block::default().borders(Borders::ALL).title("🎵 Album Art");
+    let block = Block::default().borders(Borders::ALL).title("♬ Album Art");
 
     // Draw the block first
     f.render_widget(&block, area);
