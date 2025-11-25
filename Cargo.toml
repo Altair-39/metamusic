@@ -2,6 +2,8 @@
 name = "metamusic"
 version = "0.1.0"
 edition = "2024"
+description = "TUI mp3 tags editor"
+license-file = "LICENSE"
 
 [dependencies]
 crossterm = "0.29.0"
