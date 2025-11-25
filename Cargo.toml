@@ -1,0 +1,10 @@
+[package]
+name = "metamusic"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossterm = "0.29.0"
+id3 = "1.16.3"
+inquire = "0.9.1"
+ratatui = "0.29.0"
